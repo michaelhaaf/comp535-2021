@@ -1,0 +1,17 @@
+$TTL 1W
+qc.		SOA	montreal.qc.	root.montreal.qc. ( 2021021601 28800 14400 604800 86400 )
+		NS	montreal.qc.
+
+on.		NS	ottawa.on.
+ab.		NS	edmonton.ab.
+bc.		NS	victoria.bc.
+
+mail.laval.qc.	CNAME	laval.qc.
+
+montreal.qc.		A	172.31.1.5
+laval.qc.			A	172.31.1.6
+brossard.qc.		A	172.31.1.7
+
+ottawa.on.			A	172.31.0.2
+edmonton.ab.		A	172.31.5.10
+victoria.bc.		A	172.31.4.8

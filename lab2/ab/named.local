@@ -1,0 +1,14 @@
+$TTL 1W
+ab.		SOA	edmonton.ab.	root.edmonton.ab. ( 2021021601 28800 14400 604800 86400 )
+		NS	edmonton.ab.
+
+on.		NS	ottawa.on.
+qc.		NS	montreal.qc.
+bc.		NS	victoria.bc.
+
+edmonton.ab.		A	172.31.5.11
+calgary.ab.			A	172.31.5.10
+
+ottawa.on.			A	172.31.0.2
+montreal.qc.		A	172.31.1.5
+victoria.bc.		A	172.31.4.8

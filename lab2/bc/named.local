@@ -1,0 +1,16 @@
+$TTL 1W
+bc.		SOA	victoria.bc.	root.victoria.bc. ( 2021021601 28800 14400 604800 86400 )
+		NS	victoria.bc.
+
+on.		NS	ottawa.on.
+ab.		NS	edmonton.ab.
+qc.		NS	montreal.qc.
+
+mail.victoria.bc.	CNAME	victoria.bc.
+
+victora.bc.				A	172.31.4.8
+vancouver.bc.			A	172.31.4.9
+
+ottawa.on.			A	172.31.0.2
+edmonton.ab.		A	172.31.5.10
+montreal.qc.		A	172.31.1.5

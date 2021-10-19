@@ -1,0 +1,54 @@
+$TTL 1W
+.		SOA	ottawa.on.	root.ottawa.on. ( 2021021601 28800 14400 604800 86400 )
+
+
+.		NS	ottawa.on.
+
+; Hosts
+montreal.qc.			A	172.31.1.5
+laval.qc.				A	172.31.1.6
+brossard.qc.			A	172.31.1.7
+ottawa.on.				A	172.31.0.2
+toronto.on.				A	172.31.0.4
+windsor.on.				A	172.31.0.3
+victoria.bc.			A	172.31.4.8
+vancouver.bc.			A	172.31.4.9
+edmonton.ab.			A	172.31.5.11
+calgary.ab.				A	172.31.5.10
+
+; Reverse DNS
+172.31.1.5.in-addr-arpa			PTR		montreal.qc.
+172.31.1.6.in-addr-arpa			PTR		laval.qc.
+172.31.1.7.in-addr-arpa			PTR		brossard.qc.			
+172.31.0.2.in-addr-arpa			PTR		ottawa.on.			
+172.31.0.4.in-addr-arpa			PTR		toronto.on.		
+172.31.0.3.in-addr-arpa			PTR		windsor.on.	
+172.31.4.8.in-addr-arpa			PTR		victoria.bc.
+172.31.4.9.in-addr-arpa			PTR		vancouver.bc.
+172.31.5.11.in-addr-arpa		PTR		edmonton.ab.	
+172.31.5.10.in-addr-arpa		PTR		calgary.ab.	
+
+; Aliases
+www.montreal.qc.			CNAME		montreal.qc.
+www.laval.qc.				CNAME		laval.qc.
+www.brossard.qc.			CNAME		brossard.qc.			
+www.ottawa.on.				CNAME		ottawa.on.			
+www.toronto.on.				CNAME		toronto.on.		
+www.windsor.on.				CNAME		windsor.on.	
+www.victoria.bc.			CNAME		victoria.bc.
+www.vancouver.bc.			CNAME		vancouver.bc.
+www.edmonton.ab.			CNAME		edmonton.ab.	
+www.calgary.ab.				CNAME		calgary.ab.	
+
+
+; Cluster
+cluster.ca.				IN	172.31.0.2
+		A	172.31.1.5
+		A	172.31.1.6
+		A	172.31.1.7
+		A	172.31.0.4
+		A	172.31.0.3
+		A	172.31.4.8
+		A	172.31.4.9
+		A	172.31.5.11
+		A	172.31.5.10
