@@ -1,0 +1,86 @@
+GIVEN INFORMATION
+
+1. cli.c: lines 762-771 and 801-810: gnc passes stdin to udp_send(pcb, p)
+2. PCB (protocol control buffer) for UDP connection created at 753 of cli.c
+3. line 600: udp_rec_callback sent to udp_recv method which contains udp connect method (confusing!)
+4. udp_checksum in udp.c: no need to modify the behavior of this function
+5. ONCE it is determined by IP stack that packet is for local machine and UDP, it will deliver the packet to the UDP layer by calling udp_input(). 
+6. First two arguments of udp_input hold the incoming UDP packet in two different formats. Lines198 and 199 extract source (udp sender) and dest (grouter) ports. 
+7. udp_input() CALLS THE CALLBACK set up in cli.c (line 307) . This is how the gnc application gets the UDP payload
+8. udp_send() calls udp_sendto() which calls udp_sendto_if. This func eventually (?) writes the UDP packet tothe IP layer and to the network from there.
+
+SUGGESTED APPROACH
+
+- instead of gnc calling UDP send and receive through the callback, call RDP send and receive
+- RDP send and receive uses UDP send and receive but adds reliability to it via:
+	- stop and wait alg (see textbook/lectures)
+- we will implement:
+	- timeouts (with start, decrement, reset)
+	- acknowledgements
+	- checksum (reuse UDP checksum)
+- other behaviors
+	- when timeout runs out, callback called (resend datagram)
+	- for acknowledgement, use certain bits of the UDP port number
+
+
+NOTES
+
+- 739 of cli.c shows that UDP is invoked using a CLI switch (-u). We want to replace the bbehavior that takes place when this happens.
+
+
+FROM THE LECTURE
+
+- RDT in general
+rdt_send() "called from above" lol (by gnc in this case)
+udt_send() "called by rdt to transfer packet over unreliable channel"
+deliver_data() "called by rdt to '' to upper layer"
+rdt_recv() "called when packet arrives on receier side of channel
+
+- RDT 2.1
+-  semder has to remember sequence numbers to dinstinguish ack/nak
+- receiver has to check duplicate
+- RDT 2.2 removes NAK but has same behavior by stricter seq number usage
+
+RDT 3.0
+- you can lose packets too (data and ACKs)
+broadly:
+- sender waits "reasonable" time, 
+	- retransmits if no ack (timeout counter used for this)
+	- if pck or ACK just delayed but not lost, then
+		retransmission is duplicated, that's what seq # is for
+		recevier specfies seq# of packet ACked
+
+FSM states:
+
+1)
+rdt_rcv(rcvpkt)
+&& notcorrupt(rcvpkt)
+&& isACK(rcvpkt, 1)
+____________________
+stop_timer
+
+2) 
+rdt_rcv(rcvpkt)
+&& notcorrupt(rcvpkt)
+&& isACK(rcvpkt, 0)
+__________________________
+stop_timer
+
+3) 
+rdt_send(data)
+_____________________
+sndpkt = make_pkt(0, data, checksum)
+udt_send(sendpkt)
+start_timer
+
+4) 
+rdt_send(data)
+_______________________
+sndpkt = make_pkt(1, data, checksum)
+udt_send(sndpkt)
+start_timer
+
+
+Basically, the idea is:
+- replace send, there are two conditions (ack==1 ack==0)
+- replace recv, there are two conditions (ack==1 ack==0)
