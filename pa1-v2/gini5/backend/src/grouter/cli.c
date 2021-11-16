@@ -609,11 +609,34 @@ void udp_recv_callback(void *arg, struct udp_pcb *pcb, struct pbuf *p, uchar *ad
  * callback function for RDP packets received
  */
 void rdp_recv_callback(void *arg, struct udp_pcb *pcb, struct pbuf *p, uchar *addr, uint16_t port) {
+    
+    //
+    // TODO: receiver business logic
+    // 
+    //  State 0:
+    //      rcv pkt0 from source to dest
+    //      send ack0 from dest to source
+    //
+    //  State 1:
+    //      rcv pkt1 from source to dest
+    //      send ack1 from dest to source
+    //
+    // pseudocode:
+    // if (port[0] == 0) { // that's an ack
+    //  
+    // }
+
+    // TODO: port is 16 bit number, max port # is 9999, most sig two bits are free
+    // use those two bits to encode sequence number / acknowledgement
+
     printf("%s", (char*)p->payload);
     uchar ipaddr_network_order[4];
     gHtonl(ipaddr_network_order, addr);
     udp_connect(arg, ipaddr_network_order, port);
 }
+
+// TODO: implement global timer?
+//
 
 /*
  * callback function for TCP packets received
