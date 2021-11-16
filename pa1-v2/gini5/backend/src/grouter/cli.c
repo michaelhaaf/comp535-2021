@@ -638,8 +638,8 @@ void gncTerminate() {
 
 /*
  * Handler for the "gnc" command:
- * gnc [-u] <host> <port>   // initiate a connection to a remote host
- * gnc [-u] -l <port>       // listen for an incoming connection from a remote host
+ * gnc [-ur] <host> <port>   // initiate a connection to a remote host
+ * gnc [-ur] -l <port>       // listen for an incoming connection from a remote host
  */
 void gncCmd() {
 
@@ -654,7 +654,7 @@ void gncCmd() {
         return;
 
     // TCP
-    if (strcmp(next_tok, "-u") != 0) {
+    if (strcmp(next_tok, "-u") != 0 && strcmp(next_tok, "-r") != 0) {
 
         // gnc -l <port>
         if (!strcmp(next_tok, "-l")) {
@@ -737,7 +737,7 @@ void gncCmd() {
     }
 
     // -u for UDP
-    else {
+    else if (!strcmp(next_tok, "-u")) {
         char *next_tok = next_arg(" \n");
         if (next_tok == NULL)
             return;
@@ -818,6 +818,89 @@ void gncCmd() {
 
         }
     }
+
+    // -r for RDP
+    else {
+        char *next_tok = next_arg(" \n");
+        if (next_tok == NULL)
+            return;
+
+        // gnc -r -l <port>
+        if (!strcmp(next_tok, "-l")) {
+            // port
+            next_tok = next_arg(" \n");
+            if (next_tok == NULL)
+                return;
+            uint16_t port = atoi(next_tok);
+
+            // create and initialze pcb to listen to UDP connections at the specified port
+            struct udp_pcb * pcb = udp_new();
+            rdp_recv(pcb, udp_recv_callback, pcb);
+            uchar any[4] = {0,0,0,0};
+            udp_bind(pcb, any, port);
+
+            // keep sending user input with the TCP connection
+            char payload[DEFAULT_MTU];
+            redefineSignalHandler(SIGINT, gncTerminate);
+            gncTerm = false;
+            while (!gncTerm) {
+                fgets(payload, sizeof(payload), stdin);
+
+                // create pbuf and call udp_send()
+                struct pbuf *p = pbuf_alloc(PBUF_TRANSPORT, strlen(payload), PBUF_RAM);
+                p->payload = payload;
+                err_t e1 = rdp_send(pcb, p);
+                if (e1 != ERR_OK)
+                    printf("rdp send error: %d\n", e1);
+            }
+
+            // reset SIGINT handler to ignore the signal
+            redefineSignalHandler(SIGINT, dummyFunctionCopy);
+
+            // remove and free pcb
+            udp_remove(pcb);
+        }
+
+        // gnc -r <host> <port>
+        else {
+            // host
+            uchar ipaddr[4];
+            Dot2IP(next_tok, ipaddr);
+
+            // port
+            next_tok = next_arg(" \n");
+            if (next_tok == NULL)
+                return;
+            uint16_t port = atoi(next_tok);
+
+            // create pcb and set its remote ip and remote port
+            struct udp_pcb * pcb = udp_new();
+            udp_connect(pcb, ipaddr, port);
+            rdp_recv(pcb, udp_recv_callback, pcb);
+
+            // keep sending user input with the TCP connection
+            redefineSignalHandler(SIGINT, gncTerminate);
+            char payload[DEFAULT_MTU];
+            gncTerm = false;
+            while (!gncTerm) {
+                fgets(payload, sizeof(payload), stdin);
+
+                // create pbuf and call udp_send()
+                struct pbuf *p = pbuf_alloc(PBUF_TRANSPORT, strlen(payload), PBUF_RAM);
+                p->payload = payload;
+                err_t e1 = rdp_send(pcb, p);
+                if (e1 != ERR_OK)
+                    printf("rdp send error: %d\n", e1);
+            }
+
+            // reset SIGINT handler to ignore the signal
+            redefineSignalHandler(SIGINT, dummyFunctionCopy);
+
+            // remove and free pcb
+            udp_remove(pcb);
+
+        }
+	}
 }
 
 /*
