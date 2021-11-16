@@ -15,8 +15,6 @@ extern "C" {
 
 /* The following functions is the application layer interface to the
    RDP code. */
-void             rdp_recv       (struct udp_pcb *pcb, udp_recv_fn recv,
-                                 void *recv_arg);
 err_t            rdp_send       (struct udp_pcb *pcb, struct pbuf *p);
 
 #if RDP_DEBUG

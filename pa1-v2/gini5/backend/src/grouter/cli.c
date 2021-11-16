@@ -606,6 +606,16 @@ void udp_recv_callback(void *arg, struct udp_pcb *pcb, struct pbuf *p, uchar *ad
 }
 
 /*
+ * callback function for RDP packets received
+ */
+void rdp_recv_callback(void *arg, struct udp_pcb *pcb, struct pbuf *p, uchar *addr, uint16_t port) {
+    printf("%s", (char*)p->payload);
+    uchar ipaddr_network_order[4];
+    gHtonl(ipaddr_network_order, addr);
+    udp_connect(arg, ipaddr_network_order, port);
+}
+
+/*
  * callback function for TCP packets received
  */
 err_t tcp_recv_callback(void *arg, struct tcp_pcb *tpcb, struct pbuf *p, err_t err) {
@@ -835,7 +845,7 @@ void gncCmd() {
 
             // create and initialze pcb to listen to UDP connections at the specified port
             struct udp_pcb * pcb = udp_new();
-            rdp_recv(pcb, udp_recv_callback, pcb);
+            udp_recv(pcb, rdp_recv_callback, pcb);
             uchar any[4] = {0,0,0,0};
             udp_bind(pcb, any, port);
 
@@ -876,7 +886,7 @@ void gncCmd() {
             // create pcb and set its remote ip and remote port
             struct udp_pcb * pcb = udp_new();
             udp_connect(pcb, ipaddr, port);
-            rdp_recv(pcb, udp_recv_callback, pcb);
+            udp_recv(pcb, rdp_recv_callback, pcb);
 
             // keep sending user input with the TCP connection
             redefineSignalHandler(SIGINT, gncTerminate);
