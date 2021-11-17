@@ -44,6 +44,9 @@
 #include <unistd.h>
 #include <stdbool.h>
 
+int CLIENT_STATE=0;
+int SERVER_STATE=0;
+
 
 Map *cli_map;
 Mapper *cli_mapper;
@@ -605,38 +608,85 @@ void udp_recv_callback(void *arg, struct udp_pcb *pcb, struct pbuf *p, uchar *ad
     udp_connect(arg, ipaddr_network_order, port);
 }
 
+
+// void log(char *format, *payload) {
+//     printf(format, payload);
+// }
+// 
+
 /*
- * callback function for RDP packets received
+ * callback function for RDP packets received 
  */
 void rdp_recv_callback(void *arg, struct udp_pcb *pcb, struct pbuf *p, uchar *addr, uint16_t port) {
+
+    printf("packet received: source IP: %c, source port: %i\n", addr[0], port);
+    printf("packet received: source IP: %c, source port: %i\n", addr[1], port);
+    printf("packet received: source IP: %c, source port: %i\n", addr[2], port);
+    printf("packet received: source IP: %c, source port: %i\n", addr[3], port);
     
-    //
-    // TODO: receiver business logic
-    // 
-    //  State 0:
-    //      rcv pkt0 from source to dest
-    //      send ack0 from dest to source
-    //
-    //  State 1:
-    //      rcv pkt1 from source to dest
-    //      send ack1 from dest to source
-    //
-    // pseudocode:
-    // if (port[0] == 0) { // that's an ack
-    //  
-    // }
+    int ackFlag = (port >> 15) & 1; 
+    int seqNum = (port >> 14) & 1;
 
-    // TODO: port is 16 bit number, max port # is 9999, most sig two bits are free
-    // use those two bits to encode sequence number / acknowledgement
+    printf("packet received: ackFlag %i, seqNum %i\n", ackFlag, seqNum);
 
+    // client
+    if (ackFlag == 1) {
+
+        if (seqNum != CLIENT_STATE) {
+            printf("Seq != CLIENT_STATE. ack ignored (implies duplicate). CLIENT_STATE: %i\n", CLIENT_STATE);
+        }
+
+        else {
+            printf("%s", "Seq == CLIENT_STATE. Next packet sent to server. CLIENT_STATE: %i\n", CLIENT_STATE);
+
+            // flip seqNum and ackFlag
+            pcb->remote_port = port ^ (1 << 14);
+            pcb->remote_port = port ^ (1 << 15);
+            
+            // TODO: local_port or remote_port for udp_send? investigate
+            // TODO: investigate just how this *next property works (linked list? populated how?)
+
+            // flip CLIENT_STATE
+            CLIENT_STATE = ~CLIENT_STATE;
+            udp_send(pcb->next, p);
+        }
+    }
+
+
+    // server
+    else {
+        printf("%s", "Server received packet, secNum:");
+        printf("%i", seqNum);
+        printf("\n");
+
+        if (seqNum == SERVER_STATE) {
+            printf("%s", "seqNum == SERVER_STATE. Ack sent to client. SERVER_STATE:");
+            printf("%i", SERVER_STATE);
+            printf("\n");
+
+            // flip ackFlag
+            pcb->remote_port = port ^ (1 << 15);
+
+            // flip SERVER_STATE
+            SERVER_STATE = ~SERVER_STATE;
+            udp_send(pcb, p);
+        }
+
+        else {
+            printf("Seq != SERVER_STATE. packet ignored (implies duplicate). SERVER_STATE:");
+            printf("%i", SERVER_STATE);
+            printf("\n");
+        }
+
+    }
+
+    printf("Print payload:\n");
     printf("%s", (char*)p->payload);
     uchar ipaddr_network_order[4];
     gHtonl(ipaddr_network_order, addr);
     udp_connect(arg, ipaddr_network_order, port);
 }
 
-// TODO: implement global timer?
-//
 
 /*
  * callback function for TCP packets received
@@ -882,7 +932,11 @@ void gncCmd() {
                 // create pbuf and call udp_send()
                 struct pbuf *p = pbuf_alloc(PBUF_TRANSPORT, strlen(payload), PBUF_RAM);
                 p->payload = payload;
+
+                // TODO: rdp_write!! which just adds to a queue, that rdp_recv_callback handles
+                // TODO: probably makes sense to move rdp_recv_callback to rdp.c and keep all the global variables ther
                 err_t e1 = rdp_send(pcb, p);
+
                 if (e1 != ERR_OK)
                     printf("rdp send error: %d\n", e1);
             }
@@ -911,7 +965,7 @@ void gncCmd() {
             udp_connect(pcb, ipaddr, port);
             udp_recv(pcb, rdp_recv_callback, pcb);
 
-            // keep sending user input with the TCP connection
+            // keep sending user input with the RDP connection
             redefineSignalHandler(SIGINT, gncTerminate);
             char payload[DEFAULT_MTU];
             gncTerm = false;
