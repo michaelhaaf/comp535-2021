@@ -1,0 +1,9 @@
+Demo 0: establish working denial of service attack
+	1. run gnc -u -l 5000 on Router 4
+	2. run gnc -u ROUTER4_IP 5000 on Router 6
+	3. Send messages from Router 4 to 6
+	4. Conduct the attack: ping dest_ip -i 0.000001 from machA to machB (router 4 & 6 on path)
+		in our case: mach1 and mach10
+
+Demo 1: demonstrate rdp prevails during DoS
+	1. I think it's the same experiment as Demo 0 but the results should be different ofc

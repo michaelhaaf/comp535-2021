@@ -8,5 +8,5 @@ select yn in "Yes" "No"; do
 	esac
 done
 
-rsync "-${options}" --include="*/" --include="*.[h|c]" --exclude="*" ./gini5/ comp535:~/gini5/
+rsync "-${options}" --include="*/" --include="*.[h|c]" --exclude="*" ./gini5/ comp535vm:~/gini5/
 

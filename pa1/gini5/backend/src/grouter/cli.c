@@ -13,6 +13,7 @@
  */
 
 #include "udp.h"
+#include "rdp.h"
 #include "tcp.h"
 #include "tcp_impl.h"
 #include "memp.h"
